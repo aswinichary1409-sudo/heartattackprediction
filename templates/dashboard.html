@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M+ Dashboard // How Are You Feeling Today?</title>
+    <!-- Google Fonts & FontAwesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="dashboard-body">
+
+    <!-- Mock Mobile Screen Wrap -->
+    <div class="mobile-frame-wrapper">
+        <div class="mobile-device">
+            
+            <!-- Screen 2: Dashboard Overview -->
+            <div class="dashboard-screen">
+                
+                <!-- Status Bar -->
+                <div class="screen-status-bar d-flex justify-content-between align-items-center px-4">
+                    <span class="status-time">9:41</span>
+                    <div class="status-icons">
+                        <i class="fa-solid fa-signal me-1"></i>
+                        <i class="fa-solid fa-wifi me-1"></i>
+                        <i class="fa-solid fa-battery-three-quarters"></i>
+                    </div>
+                </div>
+
+                <!-- User Header -->
+                <div class="user-header-panel d-flex justify-content-between align-items-center px-4 mt-3">
+                    <div class="user-info-wrap d-flex align-items-center gap-3">
+                        <div class="avatar-circle">
+                            <!-- Styled SVG Avatar representing Reze -->
+                            <svg viewBox="0 0 100 100" width="45" height="45">
+                                <circle cx="50" cy="50" r="48" fill="#EAEAEA" />
+                                <circle cx="50" cy="40" r="20" fill="#777777" />
+                                <path d="M 15 85 Q 50 55, 85 85 Z" fill="#777777" />
+                            </svg>
+                        </div>
+                        <div>
+                            <span class="greeting-lbl">Good Morning,</span>
+                            <h5 class="user-name-lbl mb-0" style="font-size: 14px; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ session['user'] }}">{{ session['user'] }}</h5>
+                        </div>
+                    </div>
+                    <a href="/logout" class="notif-btn text-danger text-decoration-none d-flex align-items-center justify-content-center" aria-label="Logout" style="width: 40px; height: 40px; border-radius: 50%; background-color: rgba(230, 57, 70, 0.08);">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </a>
+                </div>
+
+                <!-- Headline -->
+                <div class="dashboard-headline px-4 mt-4">
+                    <h2>How Are You<br>Feeling Today?</h2>
+                </div>
+
+                <!-- Shortcuts Actions Bar -->
+                <div class="shortcuts-bar d-flex justify-content-between align-items-center px-4 mt-4">
+                    <div class="d-flex gap-2">
+                        <button class="shortcut-pill active">
+                            <i class="fa-solid fa-heart-pulse me-2"></i> Checkup
+                        </button>
+                        <button class="shortcut-pill">
+                            <i class="fa-regular fa-comments me-2"></i> Consult
+                        </button>
+                    </div>
+                    <button class="shortcut-phone-btn" aria-label="Call Doctor">
+                        <i class="fa-solid fa-phone"></i>
+                    </button>
+                </div>
+
+                <!-- Organ Condition Grid -->
+                <div class="condition-section px-4 mt-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="section-heading">Your condition</span>
+                        <span class="badge bg-health-indicator"><i class="fa-solid fa-circle text-primary me-1" style="font-size: 6px; vertical-align: middle;"></i> Health</span>
+                    </div>
+
+                    <div class="organ-grid">
+                        
+                        <!-- Card 1: Liver (Gray 3D styled SVG) -->
+                        <div class="organ-card">
+                            <div class="organ-visual">
+                                <svg viewBox="0 0 160 160" class="organ-svg-gray">
+                                    <defs>
+                                        <linearGradient id="liverGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stop-color="#E2E2E2" />
+                                            <stop offset="100%" stop-color="#A5A5A5" />
+                                        </linearGradient>
+                                    </defs>
+                                    <!-- A premium stylized vector human liver -->
+                                    <path d="M 80 40 C 35 40, 20 70, 20 95 C 20 125, 65 125, 80 125 C 105 125, 140 115, 140 90 C 140 65, 125 40, 80 40 Z" fill="url(#liverGrad)" />
+                                    <path d="M 80 40 C 70 65, 75 95, 80 125" stroke="#FFFFFF" stroke-width="2.5" fill="none" opacity="0.6" />
+                                </svg>
+                            </div>
+                            <div class="organ-card-footer">
+                                <span>Liver</span>
+                            </div>
+                        </div>
+
+                        <!-- Card 2: My Heart (Active color, links to /my-heart) -->
+                        <a href="/my-heart" class="organ-card heart-card-link text-decoration-none">
+                            <div class="organ-visual">
+                                <img src="{{ url_for('static', filename='images/3d_heart_prediction.png') }}" alt="Red Heart 3D" class="organ-card-heart-img">
+                            </div>
+                            <div class="organ-card-footer d-flex justify-content-between align-items-center">
+                                <span class="text-dark">My Heart</span>
+                                <span class="arrow-btn-blue"><i class="fa-solid fa-arrow-up-right-from-square"></i></span>
+                            </div>
+                        </a>
+
+                        <!-- Card 3: Blood Cells (Gray 3D styled SVG) -->
+                        <div class="organ-card">
+                            <div class="organ-visual">
+                                <svg viewBox="0 0 160 160" class="organ-svg-gray">
+                                    <defs>
+                                        <linearGradient id="bloodGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stop-color="#F2F2F2" />
+                                            <stop offset="100%" stop-color="#A9A9A9" />
+                                        </linearGradient>
+                                    </defs>
+                                    <!-- Stylized glossy blood cells -->
+                                    <ellipse cx="60" cy="65" rx="30" ry="18" fill="url(#bloodGrad)" />
+                                    <ellipse cx="60" cy="65" rx="15" ry="9" fill="#999999" opacity="0.2" />
+                                    <ellipse cx="105" cy="95" rx="25" ry="15" fill="url(#bloodGrad)" />
+                                    <ellipse cx="105" cy="95" rx="12" ry="7" fill="#999999" opacity="0.2" />
+                                </svg>
+                            </div>
+                            <div class="organ-card-footer">
+                                <span>Blood Cells</span>
+                            </div>
+                        </div>
+
+                        <!-- Card 4: Brain (Gray 3D styled SVG) -->
+                        <div class="organ-card">
+                            <div class="organ-visual animate-brain">
+                                <svg viewBox="0 0 160 160" class="organ-svg-gray">
+                                    <defs>
+                                        <linearGradient id="brainGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stop-color="#EBEBEB" />
+                                            <stop offset="100%" stop-color="#AEAEAE" />
+                                        </linearGradient>
+                                    </defs>
+                                    <!-- A stylized brain vector -->
+                                    <path d="M 80 30 C 50 30, 35 45, 35 70 C 35 90, 48 95, 60 100 C 65 110, 75 130, 80 130 C 85 130, 95 110, 100 100 C 112 95, 125 90, 125 70 C 125 45, 110 30, 80 30 Z" fill="url(#brainGrad)" />
+                                    <path d="M 80 30 C 78 50, 82 85, 80 130" stroke="#FFFFFF" stroke-width="2" fill="none" opacity="0.5" />
+                                    <path d="M 50 65 C 65 60, 75 75, 80 80 C 85 75, 95 60, 110 65" stroke="#FFFFFF" stroke-width="2" fill="none" opacity="0.5" />
+                                </svg>
+                            </div>
+                            <div class="organ-card-footer">
+                                <span>Brain</span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Bottom Navigation Bar (Screen 2 style) -->
+                <div class="dashboard-bottom-nav">
+                    <div class="nav-pills-wrap d-flex justify-content-around align-items-center">
+                        <a href="/dashboard" class="nav-pill-item active">
+                            <i class="fa-solid fa-house"></i>
+                            <span class="lbl-nav">Home</span>
+                        </a>
+                        <a href="/my-heart" class="nav-pill-item">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </a>
+                        <a href="/portal" class="nav-pill-item">
+                            <i class="fa-regular fa-user"></i>
+                        </a>
+                        <a href="/" class="nav-pill-item">
+                            <i class="fa-solid fa-bars"></i>
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+</body>
+</html>

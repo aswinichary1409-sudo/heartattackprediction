@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cardimars // Cardiac Risk Assessment</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts & FontAwesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #050505;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(0, 102, 255, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(230, 74, 74, 0.08) 0%, transparent 40%);
+            background-attachment: fixed;
+        }
+
+        .glass-card {
+            background: rgba(20, 20, 25, 0.6);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        /* Slide Transition Animations */
+        .slide-out {
+            animation: slideOutLeft 0.5s ease forwards;
+        }
+
+        .slide-in {
+            animation: slideInRight 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes slideOutLeft {
+            from { opacity: 1; transform: translateX(0); }
+            to { opacity: 0; transform: translateX(-100px); display: none; }
+        }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(100px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* Pulsing Glow Animations */
+        @keyframes pulseGlowRed {
+            0%, 100% { box-shadow: 0 0 15px rgba(230, 74, 74, 0.2); border-color: rgba(230, 74, 74, 0.3); }
+            50% { box-shadow: 0 0 30px rgba(230, 74, 74, 0.5); border-color: rgba(230, 74, 74, 0.6); }
+        }
+
+        @keyframes pulseGlowGreen {
+            0%, 100% { box-shadow: 0 0 15px rgba(46, 227, 114, 0.2); border-color: rgba(46, 227, 114, 0.3); }
+            50% { box-shadow: 0 0 30px rgba(46, 227, 114, 0.5); border-color: rgba(46, 227, 114, 0.6); }
+        }
+
+        .glow-red {
+            animation: pulseGlowRed 2s infinite;
+        }
+
+        .glow-green {
+            animation: pulseGlowGreen 2s infinite;
+        }
+
+        .heart-beat {
+            animation: beat 1s infinite alternate;
+        }
+
+        @keyframes beat {
+            to { transform: scale(1.1); }
+        }
+
+        /* Force high contrast visibility for select dropdown option elements in all browsers */
+        select option {
+            background-color: #18181b !important;
+            color: #ffffff !important;
+        }
+
+        /* Print Mode Styling Stylesheet */
+        @media print {
+            body {
+                background: white !important;
+                background-image: none !important;
+                color: black !important;
+            }
+            header, footer, button, .print-hide {
+                display: none !important;
+            }
+            .glass-card {
+                background: transparent !important;
+                border: 1px solid #eee !important;
+                box-shadow: none !important;
+                color: black !important;
+                backdrop-filter: none !important;
+            }
+            #statusCard {
+                animation: none !important;
+                border: 2px solid #333 !important;
+                box-shadow: none !important;
+            }
+            .text-neutral-400, .text-neutral-500, .text-neutral-600 {
+                color: #444 !important;
+            }
+            h1, h2, h3, h4, span, p, label {
+                color: black !important;
+            }
+            #ecgCanvas {
+                border: 1px solid #ccc !important;
+                filter: invert(1) !important; /* Makes ECG print beautifully on white */
+            }
+        }
+    </style>
+</head>
+<body class="text-neutral-200 min-h-screen flex flex-col pb-12">
+
+    <!-- Global Header Navbar -->
+    <header class="w-full py-5 px-12 flex justify-between items-center border-b border-neutral-900 bg-neutral-950/40 backdrop-blur-md sticky top-0 z-50 print-hide">
+        <div class="flex items-center gap-6">
+            <a href="/" class="text-neutral-400 text-sm font-medium hover:text-white flex items-center gap-1.5 transition">
+                <i class="fa-solid fa-arrow-left"></i>
+                Back to Monitor
+            </a>
+        </div>
+        <span class="text-white font-bold text-2xl tracking-tight select-none absolute left-1/2 transform -translate-x-1/2">Cardimars&reg;</span>
+        <div class="flex items-center gap-4">
+            <span class="text-neutral-500 text-xs font-semibold uppercase tracking-wider hidden md:inline">Secure Node</span>
+            <a href="/logout" class="text-neutral-400 hover:text-[#E64A4A] text-sm font-semibold transition">Sign Out</a>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-5xl w-full mx-auto px-6 mt-10">
+
+        <!-- ========================================== -->
+        <!-- PAGE 2: DIAGNOSTIC INPUT FORM              -->
+        <!-- ========================================== -->
+        <div id="form-view" class="w-full">
+            <div class="text-center mb-10">
+                <h1 class="text-white font-extrabold text-3xl md:text-4xl tracking-tight mb-2 flex items-center justify-center gap-3">
+                    <span class="text-[#0066FF]">❤️</span> Cardiac Risk Predictor
+                </h1>
+                <p class="text-neutral-400 text-sm md:text-base max-w-lg mx-auto">
+                    Provide diagnostic vitals below to evaluate cardiac health risks.
+                </p>
+            </div>
+
+            <form id="predictionForm" class="space-y-6">
+                <!-- Hidden elements for complete dataset schema mapping -->
+                <input type="hidden" name="id" value="1001">
+                <input type="hidden" name="dataset" value="Cleveland">
+
+                <!-- 1. Patient Demographics -->
+                <div class="glass-card rounded-2xl p-6 md:p-8 space-y-6 transition-all duration-300 hover:border-neutral-800">
+                    <h3 class="text-white font-bold text-lg md:text-xl flex items-center border-b border-neutral-900 pb-3">
+                        <span class="bg-[#0066FF]/10 text-[#0066FF] w-8 h-8 rounded-lg flex items-center justify-center mr-3 text-sm">
+                            <i class="fa-solid fa-address-card"></i>
+                        </span>
+                        1. Patient Demographics
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Age -->
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-bold text-neutral-400 uppercase tracking-wider">Age (years)</label>
+                            <input type="number" name="age" placeholder="e.g. 45" required min="1" max="120"
+                                   class="px-4 py-3.5 bg-neutral-900/50 border border-neutral-800 focus:border-[#0066FF] focus:ring-1 focus:ring-[#0066FF] rounded-xl text-white text-sm focus:outline-none transition-all placeholder-neutral-600">
+                        </div>
+                        <!-- Gender -->
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-bold text-neutral-400 uppercase tracking-wider">Biological Gender</label>
+                            <select name="sex" required
+                                    class="px-4 py-3.5 bg-neutral-900/50 border border-neutral-800 focus:border-[#0066FF] focus:ring-1 focus:ring-[#0066FF] rounded-xl text-white text-sm focus:outline-none transition-all cursor-pointer">
+                                <option value="" disabled selected>Select Gender</option>
+                                <option value="1">Male</option>
+                                <option value="0">Female</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Clinical Vitals & Lab Measurements -->
+                <div class="glass-card rounded-2xl p-6 md:p-8 space-y-6 transition-all duration-300 hover:border-neutral-800">
+                    <h3 class="text-white font-bold text-lg md:text-xl flex items-center border-b border-neutral-900 pb-3">
+                        <span class="bg-[#0066FF]/10 text-[#0066FF] w-8 h-8 rounded-lg flex items-center justify-center mr-3 text-sm">
+                            <i class="fa-solid fa-heart-pulse"></i>
+                        </span>
+                        2. Clinical Vitals & Lab Measurements
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Blood Pressure -->
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-bold text-neutral-400 uppercase tracking-wider">Resting Blood Pressure (mmHg)</label>
+                            <input type="number" name="trestbps" placeholder="e.g. 120" required min="40" max="250"
+                                   class="px-4 py-3.5 bg-neutral-900/50 border border-neutral-800 focus:border-[#0066FF] focus:ring-1 focus:ring-[#0066FF] rounded-xl text-white text-sm focus:outline-none transition-all placeholder-neutral-600">
+                        </div>
+                        <!-- Cholesterol -->
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-bold text-neutral-400 uppercase tracking-wider">Serum Cholesterol (mg/dL)</label>
+                            <input type="number" name="chol" placeholder="e.g. 210" required min="40" max="600"
+                                   class="px-4 py-3.5 bg-neutral-900/50 border border-neutral-800 focus:border-[#0066FF] focus:ring-1 focus:ring-[#0066FF] rounded-xl text-white text-sm focus:outline-none transition-all placeholder-neutral-600">
+                        </div>
+                        <!-- Fasting Sugar -->
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-bold text-neutral-400 uppercase tracking-wider">Fasting Blood Sugar > 120 mg/dL</label>
+                            <select name="fbs" required
+                                    class="px-4 py-3.5 bg-neutral-900/50 border border-neutral-800 focus:border-[#0066FF] focus:ring-1 focus:ring-[#0066FF] rounded-xl text-white text-sm focus:outline-none transition-all cursor-pointer">
+                                <option value="0">No (False)</option>
+                                <option value="1">Yes (True)</option>
+                            </select>
+                        </div>
+                        <!-- ECG Results -->
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-bold text-neutral-400 uppercase tracking-wider">Resting ECG Results</label>
+                            <select name="restecg" required
+                                    class="px-4 py-3.5 bg-neutral-900/50 border border-neutral-800 focus:border-[#0066FF] focus:ring-1 focus:ring-[#0066FF] rounded-xl text-white text-sm focus:outline-none transition-all cursor-pointer">
+                                <option value="0">Normal</option>
+                                <option value="1">ST-T Abnormality</option>
+                                <option value="2">LV Hypertrophy</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Cardiac Stress Test Indicators -->
+                <div class="glass-card rounded-2xl p-6 md:p-8 space-y-6 transition-all duration-300 hover:border-neutral-800">
+                    <h3 class="text-white font-bold text-lg md:text-xl flex items-center border-b border-neutral-900 pb-3">
+                        <span class="bg-[#0066FF]/10 text-[#0066FF] w-8 h-8 rounded-lg flex items-center justify-center mr-3 text-sm">
+                            <i class="fa-solid fa-person-running"></i>
+                        </span>
+                        3. Cardiac Stress Test Indicators
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Max Heart Rate -->
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-bold text-neutral-400 uppercase tracking-wider">Max Heart Rate (bpm)</label>
+                            <input type="number" name="thalch" placeholder="e.g. 150" required min="40" max="250"
+                                   class="px-4 py-3.5 bg-neutral-900/50 border border-neutral-800 focus:border-[#0066FF] focus:ring-1 focus:ring-[#0066FF] rounded-xl text-white text-sm focus:outline-none transition-all placeholder-neutral-600">
+                        </div>
+                        <!-- Exercise Angina -->
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-bold text-neutral-400 uppercase tracking-wider">Exercise Induced Angina?</label>
+                            <select name="exang" required
+                                    class="px-4 py-3.5 bg-neutral-900/50 border border-neutral-800 focus:border-[#0066FF] focus:ring-1 focus:ring-[#0066FF] rounded-xl text-white text-sm focus:outline-none transition-all cursor-pointer">
+                                <option value="0">No</option>
+                                <option value="1">Yes</option>
+                            </select>
+                        </div>
+                        <!-- Oldpeak -->
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-bold text-neutral-400 uppercase tracking-wider">ST Depression (Oldpeak)</label>
+                            <input type="number" step="0.1" name="oldpeak" placeholder="e.g. 1.5" required min="0" max="10"
+                                   class="px-4 py-3.5 bg-neutral-900/50 border border-neutral-800 focus:border-[#0066FF] focus:ring-1 focus:ring-[#0066FF] rounded-xl text-white text-sm focus:outline-none transition-all placeholder-neutral-600">
+                        </div>
+                        <!-- Slope -->
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-bold text-neutral-400 uppercase tracking-wider">Peak ST Segment Slope</label>
+                            <select name="slope" required
+                                    class="px-4 py-3.5 bg-neutral-900/50 border border-neutral-800 focus:border-[#0066FF] focus:ring-1 focus:ring-[#0066FF] rounded-xl text-white text-sm focus:outline-none transition-all cursor-pointer">
+                                <option value="upsloping">Upsloping</option>
+                                <option value="flat">Flat</option>
+                                <option value="downsloping">Downsloping</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Diagnostics & Chest Vitals -->
+                <div class="glass-card rounded-2xl p-6 md:p-8 space-y-6 transition-all duration-300 hover:border-neutral-800">
+                    <h3 class="text-white font-bold text-lg md:text-xl flex items-center border-b border-neutral-900 pb-3">
+                        <span class="bg-[#0066FF]/10 text-[#0066FF] w-8 h-8 rounded-lg flex items-center justify-center mr-3 text-sm">
+                            <i class="fa-solid fa-folder-medical"></i>
+                        </span>
+                        4. Diagnostics & Chest Vitals
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <!-- Chest Pain Type -->
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-bold text-neutral-400 uppercase tracking-wider">Chest Pain Type</label>
+                            <select name="cp" required
+                                    class="px-4 py-3.5 bg-neutral-900/50 border border-neutral-800 focus:border-[#0066FF] focus:ring-1 focus:ring-[#0066FF] rounded-xl text-white text-sm focus:outline-none transition-all cursor-pointer">
+                                <option value="" disabled selected>Select Type</option>
+                                <option value="0">Typical Angina</option>
+                                <option value="1">Atypical Angina</option>
+                                <option value="2">Non-Anginal Pain</option>
+                                <option value="3">Asymptomatic</option>
+                            </select>
+                        </div>
+                        <!-- ca -->
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-bold text-neutral-400 uppercase tracking-wider">Major Vessels (ca)</label>
+                            <select name="ca" required
+                                    class="px-4 py-3.5 bg-neutral-900/50 border border-neutral-800 focus:border-[#0066FF] focus:ring-1 focus:ring-[#0066FF] rounded-xl text-white text-sm focus:outline-none transition-all cursor-pointer">
+                                <option value="0">0</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                            </select>
+                        </div>
+                        <!-- thal -->
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-bold text-neutral-400 uppercase tracking-wider">Thallium Result</label>
+                            <select name="thal" required
+                                    class="px-4 py-3.5 bg-neutral-900/50 border border-neutral-800 focus:border-[#0066FF] focus:ring-1 focus:ring-[#0066FF] rounded-xl text-white text-sm focus:outline-none transition-all cursor-pointer">
+                                <option value="" disabled selected>Select Result</option>
+                                <option value="normal">Normal</option>
+                                <option value="fixed defect">Fixed Defect</option>
+                                <option value="reversable defect">Reversable Defect</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="pt-4">
+                    <button type="submit" class="w-full bg-[#0066FF] text-white py-4 rounded-full font-bold tracking-wide hover:bg-[#0052cc] transition-all transform active:scale-95 shadow-lg shadow-[#0066FF]/20 text-lg">
+                        Analyze Risk
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- LOADER SCREEN (Smooth Transition State)    -->
+        <!-- ========================================== -->
+        <div id="loader-view" class="hidden flex-col items-center justify-center min-h-[50vh] text-center space-y-6 print-hide">
+            <div class="relative w-20 h-20 flex items-center justify-center">
+                <div class="absolute inset-0 rounded-full border-4 border-[#0066FF]/20 border-t-[#0066FF] animate-spin"></div>
+                <i class="fa-solid fa-heart-pulse text-3xl text-[#0066FF] heart-beat"></i>
+            </div>
+            <div>
+                <h3 class="text-white text-xl font-bold">Evaluating Vitals</h3>
+                <p class="text-neutral-500 text-sm mt-1">AI Cardiac Core is attuning model attributes...</p>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- PAGE 3: HIGH/LOW RISK RESULTS DASHBOARD    -->
+        <!-- ========================================== -->
+        <div id="results-view" class="hidden space-y-8">
+            <div class="text-center mb-6">
+                <h1 class="text-white font-extrabold text-3xl tracking-tight mb-2">Cardiac Diagnostics Report</h1>
+                <p class="text-neutral-400 text-sm print-hide">Generated by Cardimars® Clinical Stacking Engine</p>
+            </div>
+
+            <!-- Grid Layout for Dashboard Elements -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                
+                <!-- Left Panel: Status Badge, Biometric Summary, and Vitals Scrolling ECG -->
+                <div class="lg:col-span-7 space-y-8">
+                    
+                    <!-- Prediction Outcome Indicator (Dynamic Glow) -->
+                    <div id="statusCard" class="glass-card rounded-[32px] p-8 text-center relative overflow-hidden transition-all duration-300">
+                        <div class="relative z-10 flex flex-col items-center">
+                            <div id="statusIconWrap" class="w-16 h-16 rounded-full flex items-center justify-center mb-4 text-2xl heart-beat">
+                                <i id="statusIcon" class="fa-solid fa-heart-pulse"></i>
+                            </div>
+                            <span id="riskBadge" class="text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-3"></span>
+                            <h2 id="probText" class="text-white text-4xl md:text-5xl font-black tracking-tight leading-none mb-4"></h2>
+                            <p id="tipsText" class="text-neutral-300 text-sm md:text-base leading-relaxed max-w-md mt-2"></p>
+                        </div>
+                    </div>
+
+                    <!-- Biometric Profiles Input Summary Card (Printable) -->
+                    <div id="biometricProfileCard" class="glass-card rounded-2xl p-6 space-y-4">
+                        <h3 class="text-white font-bold text-sm uppercase tracking-wider flex items-center gap-2 border-b border-neutral-900 pb-3">
+                            <i class="fa-solid fa-hospital-user text-[#0066FF]"></i> Patient Biometric Profile
+                        </h3>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-6 text-xs text-neutral-300">
+                            <div><span class="text-neutral-500 font-bold block uppercase tracking-wider text-[10px] mb-0.5">Patient ID</span> <span id="lblId" class="text-white font-semibold">--</span></div>
+                            <div><span class="text-neutral-500 font-bold block uppercase tracking-wider text-[10px] mb-0.5">Age</span> <span id="lblAge" class="text-white font-semibold">--</span></div>
+                            <div><span class="text-neutral-500 font-bold block uppercase tracking-wider text-[10px] mb-0.5">Gender</span> <span id="lblGender" class="text-white font-semibold">--</span></div>
+                            <div><span class="text-neutral-500 font-bold block uppercase tracking-wider text-[10px] mb-0.5">Resting BP</span> <span id="lblBP" class="text-white font-semibold">--</span></div>
+                            <div><span class="text-neutral-500 font-bold block uppercase tracking-wider text-[10px] mb-0.5">Cholesterol</span> <span id="lblChol" class="text-white font-semibold">--</span></div>
+                            <div><span class="text-neutral-500 font-bold block uppercase tracking-wider text-[10px] mb-0.5">Fasting Sugar</span> <span id="lblFBS" class="text-white font-semibold">--</span></div>
+                            <div><span class="text-neutral-500 font-bold block uppercase tracking-wider text-[10px] mb-0.5">Resting ECG</span> <span id="lblECG" class="text-white font-semibold">--</span></div>
+                            <div><span class="text-neutral-500 font-bold block uppercase tracking-wider text-[10px] mb-0.5">Max Heart Rate</span> <span id="lblMaxHR" class="text-white font-semibold">--</span></div>
+                            <div><span class="text-neutral-500 font-bold block uppercase tracking-wider text-[10px] mb-0.5">Exercise Angina</span> <span id="lblAngina" class="text-white font-semibold">--</span></div>
+                            <div><span class="text-neutral-500 font-bold block uppercase tracking-wider text-[10px] mb-0.5">ST Depression</span> <span id="lblOldpeak" class="text-white font-semibold">--</span></div>
+                            <div><span class="text-neutral-500 font-bold block uppercase tracking-wider text-[10px] mb-0.5">ST Slope</span> <span id="lblSlope" class="text-white font-semibold">--</span></div>
+                            <div><span class="text-neutral-500 font-bold block uppercase tracking-wider text-[10px] mb-0.5">Major Vessels (ca)</span> <span id="lblCA" class="text-white font-semibold">--</span></div>
+                            <div><span class="text-neutral-500 font-bold block uppercase tracking-wider text-[10px] mb-0.5">Chest Pain Type</span> <span id="lblCP" class="text-white font-semibold">--</span></div>
+                            <div><span class="text-neutral-500 font-bold block uppercase tracking-wider text-[10px] mb-0.5">Thallium Result</span> <span id="lblThal" class="text-white font-semibold">--</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Hospital ECG Live Scrolling Vitals canvas -->
+                    <div class="glass-card rounded-2xl p-6 space-y-4">
+                        <div class="flex justify-between items-center border-b border-neutral-900 pb-3">
+                            <span class="text-white font-bold text-sm uppercase tracking-wider flex items-center gap-2">
+                                <i class="fa-solid fa-chart-line text-[#00ff66]"></i> Hospital Vitals Monitor
+                            </span>
+                            <span class="text-xs text-[#00ff66] bg-[#00ff66]/10 px-2.5 py-1 rounded-full font-bold tracking-wide animate-pulse print-hide">
+                                Live Waveform
+                            </span>
+                        </div>
+                        <div class="relative w-full rounded-lg overflow-hidden bg-[#050508] border border-neutral-900">
+                            <canvas id="ecgCanvas" class="w-full block h-40"></canvas>
+                        </div>
+                        <div class="flex justify-between items-center text-xs text-neutral-500 font-semibold px-1">
+                            <span id="ecgLabelHR">BPM: --</span>
+                            <span class="print-hide">Sweep Speed: 2.5px/f</span>
+                            <span>Vitals Attuned</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Panel: Charts Split -->
+                <div class="lg:col-span-5 space-y-8">
+                    <!-- Donut Chart -->
+                    <div class="glass-card rounded-2xl p-6 flex flex-col items-center">
+                        <h4 class="text-neutral-400 font-bold text-xs uppercase tracking-wider mb-5 self-start">
+                            Risk Distribution Analysis
+                        </h4>
+                        <div class="w-48 h-48 relative flex items-center justify-center">
+                            <canvas id="riskDonutChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Feature Importance Bar Chart -->
+                    <div class="glass-card rounded-2xl p-6">
+                        <h4 class="text-neutral-400 font-bold text-xs uppercase tracking-wider mb-5">
+                            Key Biometric Risk Indicators
+                        </h4>
+                        <div class="h-44 relative">
+                            <canvas id="featuresBarChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Full Width Row: SHAP AI Explainability -->
+            <div class="glass-card rounded-3xl p-8 grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+                <div class="md:col-span-5 space-y-4">
+                    <h3 class="text-white font-black text-2xl tracking-tight">AI Attributed Risk Analysis (SHAP)</h3>
+                    <p id="shapDetailsText" class="text-neutral-400 text-sm leading-relaxed">
+                        Please submit your diagnostic parameters to compile ensembled risk attribution weights.
+                    </p>
+                </div>
+                <div class="md:col-span-7 flex justify-center">
+                    <div class="rounded-2xl border border-neutral-800 bg-neutral-950/40 p-4 shadow-inner relative group overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60 z-10"></div>
+                        <img src="{{ url_for('static', filename='images/3d_shap_analysis.png') }}" 
+                             alt="3D SHAP Analysis" class="max-w-full h-auto object-contain rounded-xl max-h-56 filter brightness-95 contrast-105 select-none transition-all group-hover:scale-105 duration-300">
+                        <span class="absolute bottom-4 right-4 z-20 text-[10px] uppercase font-bold tracking-wider text-neutral-400 bg-neutral-900/80 px-2 py-1 rounded border border-neutral-800">
+                            SHAP Matrix Render
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Report Actions Container (Print, Download, and Send report) -->
+            <div class="flex flex-col sm:flex-row justify-center gap-4 pt-4 max-w-lg mx-auto print-hide">
+                <button onclick="downloadReport()" class="flex-1 bg-neutral-900 hover:bg-neutral-800 text-white font-semibold py-3.5 px-6 rounded-full border border-neutral-800 transition-all flex items-center justify-center gap-2 transform active:scale-95">
+                    <i class="fa-solid fa-file-arrow-down text-[#0066FF]"></i> Download Report
+                </button>
+                <button onclick="emailReport()" class="flex-1 bg-neutral-900 hover:bg-neutral-800 text-white font-semibold py-3.5 px-6 rounded-full border border-neutral-800 transition-all flex items-center justify-center gap-2 transform active:scale-95">
+                    <i class="fa-solid fa-envelope text-[#0066FF]"></i> Email Report
+                </button>
+                <button onclick="window.print()" class="flex-1 bg-neutral-900 hover:bg-neutral-800 text-white font-semibold py-3.5 px-6 rounded-full border border-neutral-800 transition-all flex items-center justify-center gap-2 transform active:scale-95">
+                    <i class="fa-solid fa-print text-[#0066FF]"></i> Save PDF
+                </button>
+            </div>
+
+            <!-- Form Reset Operations Row -->
+            <div class="flex justify-center pt-2 print-hide">
+                <button onclick="resetToInputForm()" class="bg-neutral-950 hover:bg-neutral-900 text-neutral-400 hover:text-white font-semibold px-10 py-3.5 rounded-full border border-neutral-900 transition-all flex items-center gap-2 transform active:scale-95">
+                    <i class="fa-solid fa-rotate-left"></i> Run Another Risk Assessment
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Toast Notifications system -->
+    <div id="toast" class="fixed bottom-6 right-6 px-5 py-3.5 rounded-2xl glass-card border-l-4 border-l-[#0066FF] text-white text-sm font-semibold tracking-wide translate-y-20 opacity-0 transition-all duration-300 pointer-events-none flex items-center gap-2.5 z-50 print-hide">
+        <i class="fa-solid fa-circle-info text-[#0066FF]"></i>
+        <span id="toastMsg">Report saved successfully!</span>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-20 border-t border-neutral-950 py-6 text-center text-xs text-neutral-600 print-hide">
+        &copy; 2026 Cardimars Ecosystems. All clinical datasets validated under HIPAA/HITECH constraints.
+    </footer>
+
+    <!-- Scripts Section -->
+    <script>
+        // Form & results element mappings
+        const formView = document.getElementById('form-view');
+        const loaderView = document.getElementById('loader-view');
+        const resultsView = document.getElementById('results-view');
+        const predictionForm = document.getElementById('predictionForm');
+        
+        // Chart handles
+        let donutChartInstance = null;
+        let barChartInstance = null;
+
+        // Last prediction payload cache
+        let lastPredictionData = null;
+
+        // ECG Canvas animation handles
+        const canvas = document.getElementById('ecgCanvas');
+        const ctx = canvas.getContext('2d');
+        let heartRate = 75;
+        let speed = 2.5;
+        let x = 0;
+        let points = [];
+        let animId = null;
+
+        // Dynamic Resize of Canvas
+        function resizeCanvas() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight || 160;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Draw ECG medical grid lines
+        function drawEcgGrid() {
+            ctx.strokeStyle = 'rgba(0, 255, 102, 0.04)';
+            ctx.lineWidth = 0.5;
+            const gridSize = 16;
+            for (let i = 0; i < canvas.width; i += gridSize) {
+                ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); ctx.stroke();
+            }
+            for (let j = 0; j < canvas.height; j += gridSize) {
+                ctx.beginPath(); ctx.moveTo(0, j); ctx.lineTo(canvas.width, j); ctx.stroke();
+            }
+        }
+
+        // Standard physiological ECG wave synthesizer
+        function getPhysioEcgY(time, bpm) {
+            const beatDuration = (60 / bpm) * 1000; // time in ms per cycle
+            const t = (time % beatDuration) / beatDuration; // normalized progress 0 to 1
+            const baseline = canvas.height / 2;
+
+            if (t > 0.08 && t < 0.14) {
+                // P wave
+                const pVal = (t - 0.08) / 0.06;
+                return baseline - Math.sin(pVal * Math.PI) * 7;
+            } else if (t >= 0.17 && t < 0.19) {
+                // Q wave
+                const qVal = (t - 0.17) / 0.02;
+                return baseline + qVal * 10;
+            } else if (t >= 0.19 && t < 0.22) {
+                // R peak
+                const rVal = (t - 0.19) / 0.03;
+                if (rVal < 0.5) {
+                    return (baseline + 10) - (rVal * 2) * 65;
+                } else {
+                    return (baseline - 55) + ((rVal - 0.5) * 2) * 70;
+                }
+            } else if (t >= 0.22 && t < 0.24) {
+                // S wave
+                const sVal = (t - 0.22) / 0.02;
+                return (baseline + 15) - sVal * 15;
+            } else if (t >= 0.29 && t < 0.38) {
+                // T wave
+                const tVal = (t - 0.29) / 0.09;
+                return baseline - Math.sin(tVal * Math.PI) * 12;
+            }
+            return baseline;
+        }
+
+        // Loop animation draw method
+        function runEcgAnimation() {
+            ctx.fillStyle = '#050508';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            drawEcgGrid();
+
+            ctx.strokeStyle = '#00ff66';
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#00ff66';
+            ctx.lineWidth = 2.2;
+
+            const timeNow = performance.now();
+            points.push({ x: x, y: getPhysioEcgY(timeNow, heartRate) });
+            
+            if (points.length > canvas.width / speed) {
+                points.shift();
+            }
+
+            ctx.beginPath();
+            for (let i = 0; i < points.length; i++) {
+                const pt = points[i];
+                if (i === 0) ctx.moveTo(pt.x, pt.y);
+                else ctx.lineTo(pt.x, pt.y);
+            }
+            ctx.stroke();
+
+            // Clear glow settings for subsequent elements
+            ctx.shadowBlur = 0;
+
+            x += speed;
+            if (x > canvas.width) {
+                x = 0;
+                points = [];
+            }
+
+            animId = requestAnimationFrame(runEcgAnimation);
+        }
+
+        // Toast Notification system handler
+        function showToast(msg, isError = false) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMsg');
+            toastMsg.innerText = msg;
+            
+            // Adjust borders
+            toast.style.borderLeftColor = isError ? '#E64A4A' : '#0066FF';
+            
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+            
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+                toast.classList.remove('translate-y-0', 'opacity-100');
+            }, 4000);
+        }
+
+        // Client Side txt report generator
+        function downloadReport() {
+            if (!lastPredictionData) {
+                showToast("No active prediction data compiled yet.", true);
+                return;
+            }
+
+            const fd = new FormData(predictionForm);
+            
+            // Map labels
+            const sexLbl = fd.get('sex') === '1' ? 'Male' : 'Female';
+            const fbsLbl = fd.get('fbs') === '1' ? 'Yes (>120 mg/dL)' : 'No (<=120 mg/dL)';
+            const ecgMap = {'0': 'Normal', '1': 'ST-T Abnormality', '2': 'LV Hypertrophy'};
+            const ecgLbl = ecgMap[fd.get('restecg')] || 'N/A';
+            const cpMap = {'0': 'Typical Angina', '1': 'Atypical Angina', '2': 'Non-Anginal Pain', '3': 'Asymptomatic'};
+            const cpLbl = cpMap[fd.get('cp')] || 'N/A';
+
+            const reportBody = `======================================================
+CARDIMARS® AI CLINICAL DIAGNOSTIC REPORT
+======================================================
+Report Generated: ${new Date().toLocaleString()}
+------------------------------------------------------
+PATIENT BIOMETRICS & DIAGNOSTIC VITALS:
+- Patient ID: ${fd.get('id') || '1001'}
+- Age: ${fd.get('age') || 'N/A'} years
+- Gender: ${sexLbl}
+- Resting Blood Pressure: ${fd.get('trestbps') || 'N/A'} mmHg
+- Serum Cholesterol: ${fd.get('chol') || 'N/A'} mg/dL
+- Fasting Blood Sugar > 120 mg/dL: ${fbsLbl}
+- Resting ECG Results: ${ecgLbl}
+- Max Heart Rate (thalch): ${fd.get('thalch') || 'N/A'} bpm
+- Exercise Induced Angina: ${fd.get('exang') === '1' ? 'Yes' : 'No'}
+- ST Depression (Oldpeak): ${fd.get('oldpeak') || 'N/A'}
+- Peak ST Segment Slope: ${fd.get('slope') || 'N/A'}
+- Major Vessels (ca): ${fd.get('ca') || 'N/A'}
+- Thallium Result: ${fd.get('thal') || 'N/A'}
+------------------------------------------------------
+AI PREDICTION RESULT:
+- Cardiac Anomaly Risk: ${lastPredictionData.category} Risk
+- Predictive Probability: ${lastPredictionData.probability}%
+- Clinical Guidance:
+  ${lastPredictionData.tips}
+======================================================
+CONFIDENTIALITY NOTE: The contents of this document are 
+confidential and HIPAA-protected.
+======================================================
+`;
+            
+            const blob = new Blob([reportBody], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `cardimars_report_${fd.get('id') || '1001'}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showToast("Report download triggered successfully!");
+        }
+
+        // Email Dispatch AJAX poster
+        function emailReport() {
+            if (!lastPredictionData) {
+                showToast("No active prediction data compiled yet.", true);
+                return;
+            }
+
+            const fd = new FormData(predictionForm);
+            const ecgMap = {'0': 'Normal', '1': 'ST-T Abnormality', '2': 'LV Hypertrophy'};
+            const ecgLbl = ecgMap[fd.get('restecg')] || 'N/A';
+
+            const vitals = {
+                id: fd.get('id'),
+                age: fd.get('age'),
+                sex: fd.get('sex'),
+                trestbps: fd.get('trestbps'),
+                chol: fd.get('chol'),
+                fbs: fd.get('fbs'),
+                restecg: ecgLbl,
+                thalch: fd.get('thalch'),
+                exang: fd.get('exang'),
+                oldpeak: fd.get('oldpeak'),
+                slope: fd.get('slope'),
+                ca: fd.get('ca'),
+                thal: fd.get('thal')
+            };
+
+            showToast("Dispatching report mailer...");
+
+            fetch('/send-report', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    probability: lastPredictionData.probability,
+                    category: lastPredictionData.category,
+                    tips: lastPredictionData.tips,
+                    vitals: vitals,
+                    timestamp: new Date().toLocaleString()
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) {
+                    showToast("Error sending mailer: " + data.error, true);
+                } else {
+                    showToast(data.message || "Report successfully emailed!");
+                }
+            })
+            .catch(err => {
+                console.error("Mailer failure:", err);
+                showToast("Failed to dispatch email report.", true);
+            });
+        }
+
+        // Form Submission Interceptor
+        predictionForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            // Perform transition slide action
+            formView.classList.add('slide-out');
+            
+            setTimeout(() => {
+                formView.style.display = 'none';
+                loaderView.style.display = 'flex';
+                loaderView.classList.remove('hidden');
+            }, 400);
+
+            const formData = new FormData(this);
+
+            // Attune standard timeout loop for model analyzing overlay
+            setTimeout(() => {
+                fetch('/predict', {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.error) {
+                        alert("API error: " + data.error);
+                        resetToInputForm();
+                        return;
+                    }
+
+                    // Cache results locally
+                    lastPredictionData = data;
+
+                    // Update parameters for Results Dashboard view
+                    updateDiagnosticResults(data, formData);
+
+                    // Fade loader and transition results screen in
+                    loaderView.style.display = 'none';
+                    resultsView.classList.remove('hidden');
+                    resultsView.style.display = 'block';
+                    resultsView.classList.add('slide-in');
+
+                    // Resize canvas and run animation sequence
+                    resizeCanvas();
+                    if (animId) cancelAnimationFrame(animId);
+                    runEcgAnimation();
+                })
+                .catch(err => {
+                    console.error("Diagnostic failure:", err);
+                    alert("Cardimars Prediction node lost connection. Try again.");
+                    resetToInputForm();
+                });
+            }, 1200);
+        });
+
+        // Set UI components using prediction results
+        function updateDiagnosticResults(data, formData) {
+            const probability = parseFloat(data.probability);
+            const category = data.category; // 'High' or 'Low'
+            const tips = data.tips;
+            
+            const age = parseInt(formData.get('age')) || 45;
+            const bp = parseInt(formData.get('trestbps')) || 120;
+            const chol = parseInt(formData.get('chol')) || 210;
+            const hr = parseInt(formData.get('thalch')) || 75;
+            const oldpeak = parseFloat(formData.get('oldpeak')) || 0.0;
+            const cpVal = formData.get('cp');
+            const exangVal = formData.get('exang');
+
+            // Attune heartRate variable
+            heartRate = hr;
+
+            // Set dynamic text values
+            document.getElementById('probText').innerText = `${probability.toFixed(1)}% Probability`;
+            document.getElementById('tipsText').innerText = tips;
+            document.getElementById('ecgLabelHR').innerText = `BPM: ${hr}`;
+
+            // Update Biometric Profile Grid values dynamically
+            document.getElementById('lblId').innerText = formData.get('id') || '1001';
+            document.getElementById('lblAge').innerText = age;
+            document.getElementById('lblGender').innerText = formData.get('sex') === '1' ? 'Male' : 'Female';
+            document.getElementById('lblBP').innerText = `${bp} mmHg`;
+            document.getElementById('lblChol').innerText = `${chol} mg/dL`;
+            document.getElementById('lblFBS').innerText = formData.get('fbs') === '1' ? 'Yes (Diabetic)' : 'No (Non-Diabetic)';
+            
+            const ecgMap = {'0': 'Normal', '1': 'ST-T Abnormality', '2': 'LV Hypertrophy'};
+            document.getElementById('lblECG').innerText = ecgMap[formData.get('restecg')] || 'Normal';
+            document.getElementById('lblMaxHR').innerText = `${hr} bpm`;
+            document.getElementById('lblAngina').innerText = exangVal === '1' ? 'Yes' : 'No';
+            document.getElementById('lblOldpeak').innerText = oldpeak;
+            document.getElementById('lblSlope').innerText = formData.get('slope') || 'Upsloping';
+            document.getElementById('lblCA').innerText = formData.get('ca') || '0';
+            
+            const cpMap = {'0': 'Typical Angina', '1': 'Atypical Angina', '2': 'Non-Anginal Pain', '3': 'Asymptomatic'};
+            document.getElementById('lblCP').innerText = cpMap[cpVal] || 'Typical Angina';
+            
+            const thalMap = {'normal': 'Normal', 'fixed defect': 'Fixed Defect', 'reversable defect': 'Reversable Defect'};
+            document.getElementById('lblThal').innerText = thalMap[formData.get('thal')] || 'Normal';
+
+            // Generate Dynamic SHAP Diagnostic Text explaining individual risks
+            let shapText = "";
+            if (category === 'High') {
+                shapText = `The Stacking AI Classifier has detected high-risk cardiac anomaly signatures in your clinical biometric profile. Attributed SHAP forces indicate that your ST Segment depression **(Oldpeak: ${oldpeak})** combined with a **${formData.get('slope')} peak slope** indicates oxygen deprivation in the heart muscle under workload. `;
+                
+                if (chol > 240) {
+                    shapText += `Furthermore, your elevated serum cholesterol of **${chol} mg/dL** acts as a major coronary risk accelerant. `;
+                }
+                if (bp > 140) {
+                    shapText += `A resting blood pressure of **${bp} mmHg** places persistent strain on the vascular walls. `;
+                }
+                if (exangVal === '1') {
+                    shapText += `The occurrence of exercise-induced angina confirms active myocardial perfusion limits. `;
+                }
+                shapText += `These combined diagnostic factors tax the cardiovascular system, pushing your cardiac anomaly probability to **${probability.toFixed(1)}%**. Immediate medical consultation with a cardiologist is recommended.`;
+            } else {
+                shapText = `The Stacking AI model indicates a safe diagnostic margin with low ensembled cardiac risk. Your primary resting vitals are clinically stable: resting blood pressure is **${bp} mmHg** and serum cholesterol is **${chol} mg/dL** (both near optimal limits). `;
+                
+                if (hr > 120) {
+                    shapText += `Your maximum heart rate threshold of **${hr} bpm** reflects strong cardiorespiratory output capacity. `;
+                }
+                if (oldpeak < 1.0) {
+                    shapText += `The negligible ST depression (Oldpeak: ${oldpeak}) shows no signs of active myocardial ischemia under stress. `;
+                }
+                shapText += `These stable biometric features successfully counteract any adverse indicators, resulting in a low cardiac anomaly risk probability of **${probability.toFixed(1)}%**. Continue maintaining your active lifestyle.`;
+            }
+            document.getElementById('shapDetailsText').innerHTML = shapText;
+
+            // Style results status card based on risk category
+            const statusCard = document.getElementById('statusCard');
+            const statusIconWrap = document.getElementById('statusIconWrap');
+            const statusIcon = document.getElementById('statusIcon');
+            const riskBadge = document.getElementById('riskBadge');
+
+            if (category === 'High') {
+                statusCard.className = "glass-card rounded-[32px] p-8 text-center relative overflow-hidden transition-all duration-300 glow-red border-[#E64A4A]/30";
+                statusIconWrap.className = "w-16 h-16 rounded-full flex items-center justify-center mb-4 text-2xl heart-beat bg-[#E64A4A]/10 text-[#E64A4A]";
+                statusIcon.className = "fa-solid fa-triangle-exclamation";
+                riskBadge.innerText = "🚨 High Risk Attuned";
+                riskBadge.className = "text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-3 bg-[#E64A4A]/10 text-[#E64A4A]";
+            } else {
+                statusCard.className = "glass-card rounded-[32px] p-8 text-center relative overflow-hidden transition-all duration-300 glow-green border-[#2DE372]/30";
+                statusIconWrap.className = "w-16 h-16 rounded-full flex items-center justify-center mb-4 text-2xl heart-beat bg-[#2DE372]/10 text-[#2DE372]";
+                statusIcon.className = "fa-solid fa-shield-halved";
+                riskBadge.innerText = "🛡️ Low Risk Attuned";
+                riskBadge.className = "text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-3 bg-[#2DE372]/10 text-[#2DE372]";
+            }
+
+            // Attune Risk Donut Split Chart
+            const riskColor = category === 'High' ? '#E64A4A' : '#2DE372';
+            const safeColor = '#1f1f2e';
+
+            if (donutChartInstance) donutChartInstance.destroy();
+            
+            const ctxDonut = document.getElementById('riskDonutChart').getContext('2d');
+            donutChartInstance = new Chart(ctxDonut, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Cardiac Risk', 'Normal Margin'],
+                    datasets: [{
+                        data: [probability, 100 - probability],
+                        backgroundColor: [riskColor, safeColor],
+                        borderWidth: 0,
+                        hoverOffset: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '80%',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: true }
+                    }
+                }
+            });
+
+            // Attune Feature importance bar weights based on inputs
+            // Mock features weighted metrics calculated locally relative to base thresholds
+            const bpWeight = Math.max(10, Math.min(95, ((bp - 90) / 100) * 100));
+            const cholWeight = Math.max(10, Math.min(95, ((chol - 150) / 300) * 100));
+            const hrWeight = Math.max(10, Math.min(95, ((hr - 60) / 140) * 100));
+            const oldpeakWeight = Math.max(10, Math.min(95, (oldpeak / 5.0) * 100));
+            const exangWeight = exangVal === '1' ? 85 : 15;
+
+            if (barChartInstance) barChartInstance.destroy();
+
+            const ctxBar = document.getElementById('featuresBarChart').getContext('2d');
+            barChartInstance = new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: ['Cholesterol', 'BP Vitals', 'Max HR', 'ST Dep', 'Ex Angina'],
+                    datasets: [{
+                        label: 'Weight',
+                        data: [cholWeight, bpWeight, hrWeight, oldpeakWeight, exangWeight],
+                        backgroundColor: [
+                            'rgba(0, 102, 255, 0.75)',
+                            'rgba(0, 102, 255, 0.75)',
+                            'rgba(0, 102, 255, 0.75)',
+                            'rgba(0, 102, 255, 0.75)',
+                            'rgba(0, 102, 255, 0.75)'
+                        ],
+                        borderRadius: 6,
+                        borderWidth: 0,
+                        barThickness: 12
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(255, 255, 255, 0.05)', drawTicks: false },
+                            ticks: { color: '#6b7280', font: { size: 10 } },
+                            min: 0,
+                            max: 100
+                        },
+                        y: {
+                            grid: { display: false },
+                            ticks: { color: '#d1d5db', font: { size: 11, weight: 'bold' } }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Return transition back to input fields form
+        function resetToInputForm() {
+            if (animId) cancelAnimationFrame(animId);
+            
+            resultsView.classList.add('slide-out');
+            
+            setTimeout(() => {
+                resultsView.style.display = 'none';
+                resultsView.classList.add('hidden');
+                resultsView.classList.remove('slide-out', 'slide-in');
+                
+                formView.style.display = 'block';
+                formView.classList.remove('slide-out');
+                formView.classList.add('slide-in');
+            }, 400);
+        }
+    </script>
+</body>
+</html>

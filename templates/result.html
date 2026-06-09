@@ -1,0 +1,9 @@
+<h1>Prediction Result</h1>
+
+{% if prediction == 1 %}
+    <h2>⚠ High Heart Disease Risk</h2>
+{% else %}
+    <h2>✅ Low Heart Disease Risk</h2>
+{% endif %}
+
+<h3>Risk Percentage: {{ risk }}%</h3>

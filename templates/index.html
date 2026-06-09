@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cardimars Desktop Web Portal</title>
+    <!-- Tailwind CSS for modern layout utilities -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #050505;
+            overflow-x: hidden;
+        }
+
+        .bg-grid {
+            background-size: 50px 50px;
+            background-image: 
+                linear-gradient(to right, rgba(255, 255, 255, 0.01) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.01) 1px, transparent 1px);
+        }
+
+        .page-view {
+            display: none;
+            min-height: 100vh;
+            width: 100%;
+        }
+
+        .page-view.active {
+            display: flex;
+        }
+
+        /* Ambient glowing circles */
+        .ambient-glow-1 {
+            background: radial-gradient(circle, rgba(0, 102, 255, 0.1) 0%, transparent 60%);
+            filter: blur(40px);
+        }
+
+        .ambient-glow-2 {
+            background: radial-gradient(circle, rgba(230, 74, 74, 0.08) 0%, transparent 60%);
+            filter: blur(40px);
+        }
+
+        /* Floating HUD Indicator Animations */
+        @keyframes floatUpDown {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-12px); }
+        }
+
+        .float-hud-1 {
+            animation: floatUpDown 5s ease-in-out infinite;
+        }
+
+        .float-hud-2 {
+            animation: floatUpDown 6s ease-in-out infinite 1.5s;
+        }
+
+        .hud-chip {
+            background: rgba(20, 20, 25, 0.65);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Pulse Ring for CTA Button */
+        @keyframes pulseOutline {
+            0% { box-shadow: 0 0 0 0 rgba(230, 74, 74, 0.3); }
+            70% { box-shadow: 0 0 0 16px rgba(230, 74, 74, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(230, 74, 74, 0); }
+        }
+        .pulse-ring {
+            animation: pulseOutline 2.2s infinite;
+        }
+
+        /* Smooth circle progress adjustments */
+        .progress-ring-circle {
+            transition: stroke-dashoffset 0.5s ease-out;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+    </style>
+</head>
+<body class="text-neutral-200">
+
+    <!-- ======================================================== -->
+    <!-- STAGE 0: LOGIN PAGE (Minimalist Cardimars Gate)          -->
+    <!-- ======================================================== -->
+    <div id="login-page" class="page-view flex-col items-center justify-center bg-[#0D0D0D]">
+        <div class="w-full max-w-md p-8 text-center flex flex-col items-center">
+            <h1 class="text-white font-bold text-3xl tracking-tight mb-2">Cardimars&reg;</h1>
+            <p class="text-neutral-500 text-sm mb-8 tracking-wide">Heartbeat Monitoring Web Ecosystem</p>
+            
+            <div class="w-full space-y-4 mb-6">
+                <input type="email" placeholder="Username or Email" value="developer@cardimars.io" readonly class="w-full px-5 py-3.5 bg-neutral-900 border border-neutral-800 rounded-2xl text-white text-sm focus:outline-none opacity-80 cursor-not-allowed">
+                <input type="password" placeholder="Password" value="••••••••••••" readonly class="w-full px-5 py-3.5 bg-neutral-900 border border-neutral-800 rounded-2xl text-white text-sm focus:outline-none opacity-80 cursor-not-allowed">
+            </div>
+
+            <button onclick="navigateTo('page-1')" class="w-full bg-[#E64A4A] text-white py-4 rounded-full font-semibold tracking-wide hover:bg-[#d63f3f] transition-all transform active:scale-95 shadow-lg shadow-[#E64A4A]/20">
+                Sign In to Dashboard
+            </button>
+        </div>
+    </div>
+
+
+    <!-- ======================================================== -->
+    <!-- STAGE 1: FIRST PAGE AFTER LOGIN (Dark Theme Monitor)     -->
+    <!-- ======================================================== -->
+    <div id="page-1" class="page-view active flex-col bg-[#050505] relative overflow-hidden bg-grid">
+        <!-- Ambient atmospheric glowing backdrops -->
+        <div class="absolute w-[500px] h-[500px] -top-20 -left-20 ambient-glow-1 pointer-events-none rounded-full z-0"></div>
+        <div class="absolute w-[500px] h-[500px] bottom-0 right-0 ambient-glow-2 pointer-events-none rounded-full z-0"></div>
+
+        <!-- Global Laptop Header Navbar -->
+        <header class="w-full py-6 px-12 flex justify-between items-center border-b border-neutral-900/60 bg-neutral-950/20 backdrop-blur-md relative z-10">
+            <span class="text-white font-bold text-2xl tracking-tight select-none">Cardimars&reg;</span>
+            <div class="flex items-center gap-8">
+                <span class="text-neutral-400 text-sm font-medium">System State: <span class="text-[#2DE372] font-semibold">Online</span></span>
+                <button class="flex items-center gap-2 text-neutral-300 text-sm font-medium hover:text-white">
+                    <div class="grid grid-cols-2 gap-0.5 w-3.5 h-3.5">
+                        <div class="bg-neutral-400 rounded-full"></div><div class="bg-neutral-400 rounded-full"></div>
+                        <div class="bg-neutral-400 rounded-full"></div><div class="bg-neutral-400 rounded-full"></div>
+                    </div>
+                    Menu
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Laptop Content Workspace Grid -->
+        <main class="flex-1 max-w-7xl w-full mx-auto px-12 py-8 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center relative z-10">
+            
+            <!-- Left Info Panel Column (Placements anchored to laptop viewport) -->
+            <div class="lg:col-span-5 flex flex-col justify-center h-full max-h-[420px] gap-6">
+                <div class="space-y-3">
+                    <h1 class="text-white text-5xl lg:text-6xl font-extrabold leading-tight tracking-tight">Heart Attack Prediction</h1>
+                    <p class="text-neutral-400 text-sm md:text-base font-medium leading-relaxed">
+                        Clinical-grade artificial intelligence predicting cardiovascular abnormalities through multi-layer ensemble stacking models.
+                    </p>
+                </div>
+
+                <!-- Clinical Stats Summary Widget Bar -->
+                <div class="grid grid-cols-3 gap-4 border-t border-b border-neutral-900/80 py-4 my-2">
+                    <div>
+                        <p class="text-[10px] text-neutral-500 font-bold uppercase tracking-wider">Data Source</p>
+                        <p class="text-white text-sm md:text-base font-extrabold mt-0.5">4 UCI Datasets</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-neutral-500 font-bold uppercase tracking-wider">Attributes</p>
+                        <p class="text-white text-sm md:text-base font-extrabold mt-0.5">15 Clinical Vitals</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-neutral-500 font-bold uppercase tracking-wider">Model Accuracy</p>
+                        <p class="text-[#2DE372] text-sm md:text-base font-extrabold mt-0.5">94.2% Ensembled</p>
+                    </div>
+                </div>
+
+                <!-- Footer Operations Action Row -->
+                <div class="space-y-4">
+                    <a href="/my-heart" class="pulse-ring w-full bg-[#E64A4A] text-white py-4 rounded-full flex items-center justify-center gap-2 text-sm font-semibold tracking-wide hover:bg-[#d63f3f] transition-all transform active:scale-95 shadow-lg shadow-[#E64A4A]/20 group text-center no-underline">
+                        Start Diagnostic Scan
+                        <i class="fa-solid fa-circle-nodes text-xs animate-pulse text-red-200"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Right Visual Graphic Centerpiece Column -->
+            <div class="lg:col-span-7 flex items-center justify-center h-full relative">
+                <!-- Floating HUD diagnostic indicator badges -->
+                <div class="absolute top-[18%] left-[8%] float-hud-1 hud-chip px-3 py-2 rounded-xl flex items-center gap-2.5 text-xs text-neutral-200 z-20 pointer-events-none select-none">
+                    <span class="w-1.5 h-1.5 rounded-full bg-[#0066FF] animate-pulse"></span>
+                    <span class="font-extrabold tracking-wider uppercase text-[9px]">Stacking Ensemble: Attuned</span>
+                </div>
+                
+                <div class="absolute bottom-[22%] right-[8%] float-hud-2 hud-chip px-3 py-2 rounded-xl flex items-center gap-2.5 text-xs text-neutral-200 z-20 pointer-events-none select-none">
+                    <span class="w-1.5 h-1.5 rounded-full bg-[#2DE372] animate-pulse"></span>
+                    <span class="font-extrabold tracking-wider uppercase text-[9px]">Pipeline state: ready</span>
+                </div>
+
+                <!-- Outer background radar wave rings for laptop layout space scaling -->
+                <div class="absolute w-[450px] h-[450px] border border-neutral-900 rounded-full animate-ping opacity-10 pointer-events-none"></div>
+                <div class="absolute w-[520px] h-[520px] border border-neutral-900/60 rounded-full pointer-events-none"></div>
+                
+                <!-- Main Red High-Fidelity Heart Graphics Frame -->
+                <img src="{{ url_for('static', filename='images/3d_anatomical_heart.png') }}" id="darkHeart" class="w-[420px] h-auto object-contain select-none filter drop-shadow-[0_0_40px_rgba(230,74,74,0.3)] transition-all duration-300 transform relative z-10" style="mix-blend-mode: screen; opacity: 0.95;" alt="Anatomical Heart Structure">
+            </div>
+
+        </main>
+    </div>
+
+
+    <!-- ======================================================== -->
+    <!-- STAGE 2: NEXT PAGE (Dark Theme Heart Analysis)           -->
+    <!-- ======================================================== -->
+    <div id="page-2" class="page-view flex-col bg-[#0D0D0D]">
+        <!-- Global Laptop Header Navbar (Dark Context Alternative) -->
+        <header class="w-full py-6 px-12 flex justify-between items-center border-b border-neutral-800/60">
+            <span class="text-white font-bold text-2xl tracking-tight select-none">Cardimars&reg;</span>
+            <div class="flex items-center gap-6">
+                <button onclick="navigateTo('page-1')" class="text-neutral-400 text-sm font-medium hover:text-white flex items-center gap-1.5 transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    Back to Monitor
+                </button>
+                <button class="flex items-center gap-2 text-neutral-300 text-sm font-medium hover:text-white">
+                    <div class="grid grid-cols-2 gap-0.5 w-3.5 h-3.5">
+                        <div class="bg-neutral-400 rounded-full"></div><div class="bg-neutral-400 rounded-full"></div>
+                        <div class="bg-neutral-400 rounded-full"></div><div class="bg-neutral-400 rounded-full"></div>
+                    </div>
+                    Menu
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Laptop Content Workspace Grid matching original-f51670a5120818565114a8e9ed0befca.webp values -->
+        <main class="flex-1 max-w-7xl w-full mx-auto px-12 py-8 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            
+            <!-- Left Header Typography Column -->
+            <div class="lg:col-span-5 space-y-8">
+                <div>
+                    <h1 class="text-white text-4xl lg:text-5xl font-bold leading-[1.15] tracking-tight">
+                        Results of <br>
+                        the <span class="text-[#E64A4A]">Analysis</span> <br>
+                        of your <span class="text-[#E64A4A]">heart</span>
+                    </h1>
+                    <p class="text-neutral-400 text-base font-medium mt-3 tracking-wide">and Recommendations based on metrics data</p>
+                </div>
+
+                <!-- Dark Metrics Panel Component Formatted horizontally across desktop spacing context -->
+                <div class="bg-neutral-900 w-full rounded-[32px] p-6 flex justify-between items-center text-white border border-neutral-800/40 shadow-xl">
+                    <div class="text-center flex-1 border-r border-neutral-800">
+                        <p class="text-neutral-400 text-[11px] font-medium uppercase tracking-wider">Stress level</p>
+                        <p id="stressVal" class="text-3xl font-bold mt-1 tracking-tight text-white">20%</p>
+                    </div>
+                    <div class="text-center flex-1 border-r border-neutral-800">
+                        <p class="text-neutral-400 text-[11px] font-medium uppercase tracking-wider">Energy</p>
+                        <p id="energyVal" class="text-3xl font-bold mt-1 tracking-tight text-white">36%</p>
+                    </div>
+                    <div class="text-center flex-1">
+                        <p class="text-neutral-400 text-[11px] font-medium uppercase tracking-wider">HRV</p>
+                        <p id="hrvVal" class="text-3xl font-bold mt-1 tracking-tight text-white">56</p>
+                    </div>
+                </div>
+
+                <!-- Confirm Action CTA Block -->
+                <button class="w-full bg-[#E64A4A] text-white py-4 rounded-full font-semibold tracking-wide hover:bg-[#d63f3f] transition active:scale-[0.99] shadow-lg shadow-[#E64A4A]/10">
+                    Good for today
+                </button>
+            </div>
+
+            <!-- Right Vector Progress Analytics Dial Frame Column -->
+            <div class="lg:col-span-7 flex items-center justify-center">
+                <div class="relative flex items-center justify-center">
+                    <!-- Scaled Widescreen Vector Ring Frame Structure -->
+                    <svg class="w-72 h-72 transform -rotate-1">
+                        <!-- Horizontal background secondary offset arcs mimicking side screen overflow pagination -->
+                        <circle cx="-30" cy="144" r="90" stroke="#E64A4A" stroke-width="2" fill="transparent" stroke-dasharray="10 5" class="opacity-20" />
+                        <circle cx="318" cy="144" r="90" stroke="#E64A4A" stroke-width="2" fill="transparent" class="opacity-25" />
+                        
+                        <!-- Core Ring Tracking System indicators -->
+                        <circle cx="144" cy="144" r="110" stroke="rgba(255, 255, 255, 0.08)" stroke-width="2" fill="transparent" stroke-dasharray="4 4" />
+                        <circle id="progressCircle" cx="144" cy="144" r="110" stroke="#E64A4A" stroke-width="4.5" fill="transparent" 
+                                stroke-dasharray="691" stroke-dashoffset="691" class="progress-ring-circle" />
+                    </svg>
+                    <!-- Floating absolute value interface structure -->
+                    <div class="absolute flex flex-col items-center justify-center">
+                        <span id="lightPulseVal" class="text-white text-[82px] font-extrabold tracking-tighter leading-none">82</span>
+                        <span class="text-neutral-400 text-base font-bold tracking-wide mt-1">bmp</span>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+
+    <!-- ======================================================== -->
+    <!-- JAVASCRIPT CONTROLLER ARCHITECTURE                      -->
+    <!-- ======================================================== -->
+    <script>
+        // Exact frame metric timeline values extracted from original-72dad4be588fae67c5b1bda174421a49.mp4
+        const animationFrames = [
+            { darkPulse: 8,  lightPulse: 27, stress: 6,  energy: 9,  hrv: 10,  dashOffset: 480 },
+            { darkPulse: 63, lightPulse: 65, stress: 19, energy: 33, hrv: 49,  dashOffset: 310 },
+            { darkPulse: 82, lightPulse: 82, stress: 20, energy: 36, hrv: 56,  dashOffset: 210 }
+        ];
+
+        // Multi-page navigation router abstraction handler
+        function navigateTo(pageId) {
+            // Deactivate all page containers
+            document.querySelectorAll('.page-view').forEach(view => {
+                view.classList.remove('active');
+            });
+            
+            // Activate the designated step target structure
+            const targetPage = document.getElementById(pageId);
+            targetPage.classList.add('active');
+
+            // Hook for auto-triggering the dynamic monitor metrics when user lands on Page 1
+            if (pageId === 'page-1') {
+                triggerVideoSequenceAnimation();
+            }
+
+            // Hook for rendering final circle gauge calculation positions when landing on Page 2
+            if (pageId === 'page-2') {
+                setTimeout(() => {
+                    document.getElementById('progressCircle').style.strokeDashoffset = 210; // Complete state offset placement
+                }, 100);
+            }
+        }
+
+        // Execution structure for running live data counts matching video clip properties
+        function triggerVideoSequenceAnimation() {
+            let step = 0;
+            // Clear default styling positioning before sequencing begins
+            resetToDefaultMetrics(animationFrames[0]);
+
+            const sequenceInterval = setInterval(() => {
+                if (step < animationFrames.length) {
+                    renderUIFields(animationFrames[step]);
+                    step++;
+                } else {
+                    clearInterval(sequenceInterval);
+                }
+            }, 750); // Temporal delay step matching original reference media duration adjustments
+        }
+
+        // Master UI renderer updater matching array parameters
+        function renderUIFields(frame) {
+            const darkPulse = document.getElementById('darkPulseVal');
+            if (darkPulse) darkPulse.innerText = frame.darkPulse;
+            
+            const lightPulse = document.getElementById('lightPulseVal');
+            if (lightPulse) lightPulse.innerText = frame.lightPulse;
+            
+            const stress = document.getElementById('stressVal');
+            if (stress) stress.innerText = frame.stress + '%';
+            
+            const energy = document.getElementById('energyVal');
+            if (energy) energy.innerText = frame.energy + '%';
+            
+            const hrv = document.getElementById('hrvVal');
+            if (hrv) hrv.innerText = frame.hrv;
+            
+            // Visual scale accentuation feedback mapping to continuous heart engine pulse simulation
+            const heartbeatGraphic = document.getElementById('darkHeart');
+            if(heartbeatGraphic) {
+                heartbeatGraphic.style.transform = 'scale(1.05)';
+                setTimeout(() => heartbeatGraphic.style.transform = 'scale(1)', 180);
+            }
+        }
+
+        function resetToDefaultMetrics(initialFrame) {
+            renderUIFields(initialFrame || { darkPulse: 82, lightPulse: 82, stress: 20, energy: 36, hrv: 56 });
+        }
+    </script>
+</body>
+</html>

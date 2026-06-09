@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M+ Portal // Transforming Healthcare</title>
+    <!-- Google Fonts & FontAwesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="portal-body">
+
+    <!-- Mock Mobile Screen Wrap -->
+    <div class="mobile-frame-wrapper">
+        <div class="mobile-device">
+            
+            <!-- Screen 1: Welcome Portal -->
+            <div class="portal-screen">
+                
+                <!-- Header -->
+                <div class="portal-header d-flex justify-content-between align-items-center">
+                    <span class="portal-time">9:41</span>
+                    <a class="portal-logo" href="/">M<span class="plus">+</span></a>
+                </div>
+
+                <!-- Headline -->
+                <div class="portal-headline-wrap text-center">
+                    <h2 class="portal-title">Transforming<br>Healthcare</h2>
+                </div>
+
+                <!-- DNA Visual -->
+                <div class="portal-visual-wrap">
+                    <img src="{{ url_for('static', filename='images/3d_dna_portal.png') }}" alt="DNA Helix Render" class="portal-dna-img">
+                </div>
+
+                <!-- Sign In/Sign Up Buttons (Screen 1 style) -->
+                <div class="portal-actions">
+                    <div class="btn-group-pill">
+                        <a href="/dashboard" class="btn-pill-action signin">
+                            <span>Sign In</span>
+                            <span class="arrow-circle"><i class="fa-solid fa-arrow-up-right-from-square"></i></span>
+                        </a>
+                        <a href="/dashboard" class="btn-pill-action signup">
+                            <span>Sign Up</span>
+                            <span class="arrow-circle"><i class="fa-solid fa-arrow-up-right-from-square"></i></span>
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+</body>
+</html>
