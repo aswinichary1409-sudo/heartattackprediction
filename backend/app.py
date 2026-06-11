@@ -6,13 +6,110 @@ import os
 import json
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
+import sqlite3
+from datetime import datetime
+
+def init_db():
+    conn = sqlite3.connect("history.db")
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS history
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                 age INTEGER,
+                 chol INTEGER,
+                 bp INTEGER,
+                 risk REAL,
+                 date TEXT)''')
+    conn.commit()
+    conn.close()
+
+init_db()
 
 app = Flask(__name__, template_folder='../templates', static_folder='../static')
 CORS(app)
 app.config['SECRET_KEY'] = 'super-secret-m-plus-key-187'
 
-model = joblib.load('diversity_model.pkl')
-scaler = joblib.load('diversity_scaler.pkl')
+# Model and Scaler paths
+MODEL_PATH = 'random_forest_model.pkl'
+SCALER_PATH = 'scaler.pkl'
+
+def train_and_save_model():
+    try:
+        import pandas as pd
+        from sklearn.ensemble import RandomForestClassifier
+        from sklearn.preprocessing import StandardScaler
+        
+        csv_path = 'heart_disease_uci.csv'
+        if not os.path.exists(csv_path):
+            csv_path = os.path.join(os.path.dirname(__file__), 'heart_disease_uci.csv')
+            
+        if not os.path.exists(csv_path):
+            print("ERROR: heart_disease_uci.csv not found!")
+            return None, None
+            
+        print("Training Random Forest Classifier on heart_disease_uci.csv...")
+        df_raw = pd.read_csv(csv_path)
+        
+        # Preprocessing
+        df_raw['trestbps'] = df_raw['trestbps'].fillna(df_raw['trestbps'].median())
+        df_raw['chol'] = df_raw['chol'].fillna(df_raw['chol'].median())
+        df_raw['thalch'] = df_raw['thalch'].fillna(df_raw['thalch'].median())
+        df_raw['oldpeak'] = df_raw['oldpeak'].fillna(df_raw['oldpeak'].median())
+
+        df_processed = pd.DataFrame()
+        df_processed['id'] = df_raw['id'].fillna(0)
+        df_processed['age'] = df_raw['age']
+        df_processed['sex'] = df_raw['sex'].map({'Male': 1.0, 'Female': 0.0}).fillna(1.0)
+        df_processed['trestbps'] = df_raw['trestbps']
+        df_processed['chol'] = df_raw['chol']
+        df_processed['fbs'] = df_raw['fbs'].map({True: 1.0, False: 0.0}).fillna(0.0)
+        df_processed['thalch'] = df_raw['thalch']
+        df_processed['exang'] = df_raw['exang'].map({True: 1.0, False: 0.0}).fillna(0.0)
+        df_processed['oldpeak'] = df_raw['oldpeak']
+
+        df_processed['dataset_Hungary'] = (df_raw['dataset'] == 'Hungary').astype(float)
+        df_processed['dataset_Switzerland'] = (df_raw['dataset'] == 'Switzerland').astype(float)
+        df_processed['dataset_VA Long Beach'] = (df_raw['dataset'] == 'VA Long Beach').astype(float)
+
+        df_processed['cp_atypical angina'] = (df_raw['cp'] == 'atypical angina').astype(float)
+        df_processed['cp_non-anginal'] = (df_raw['cp'] == 'non-anginal').astype(float)
+        df_processed['cp_typical angina'] = (df_raw['cp'] == 'typical angina').astype(float)
+
+        df_processed['restecg_normal'] = (df_raw['restecg'] == 'normal').astype(float)
+        df_processed['restecg_st-t abnormality'] = (df_raw['restecg'] == 'st-t abnormality').astype(float)
+
+        y = (df_raw['num'] > 0).astype(int)
+        X = df_processed
+
+        scaler = StandardScaler()
+        X_scaled = scaler.fit_transform(X)
+
+        model = RandomForestClassifier(n_estimators=100, random_state=42, max_depth=10)
+        model.fit(X_scaled, y)
+        
+        dir_name = os.path.dirname(__file__) or '.'
+        joblib.dump(model, os.path.join(dir_name, MODEL_PATH))
+        joblib.dump(scaler, os.path.join(dir_name, SCALER_PATH))
+        print("Random Forest model successfully trained and saved!")
+        return model, scaler
+    except Exception as ex:
+        print(f"Error training model: {ex}")
+        return None, None
+
+# Load or Train Model on startup
+dir_name = os.path.dirname(__file__) or '.'
+model_file = os.path.join(dir_name, MODEL_PATH)
+scaler_file = os.path.join(dir_name, SCALER_PATH)
+
+if os.path.exists(model_file) and os.path.exists(scaler_file):
+    try:
+        model = joblib.load(model_file)
+        scaler = joblib.load(scaler_file)
+        print("Pre-trained Random Forest model and scaler loaded successfully.")
+    except Exception as e:
+        print(f"Error loading models: {e}. Re-training...")
+        model, scaler = train_and_save_model()
+else:
+    model, scaler = train_and_save_model()
 
 USERS_FILE = 'users.json'
 
@@ -98,8 +195,19 @@ def my_heart():
         'my_heart.html',
         risk=0,
         prediction_text="",
-        tips=""
+        tips="",
+        recommendation=""
     )
+
+@app.route('/history')
+@login_required
+def history():
+    conn = sqlite3.connect("history.db")
+    c = conn.cursor()
+    c.execute("SELECT * FROM history ORDER BY id DESC")
+    data = c.fetchall()
+    conn.close()
+    return render_template("history.html", data=data)
 @app.route('/predict', methods=['POST'])
 @login_required
 def predict():
@@ -162,6 +270,81 @@ def predict():
         probability = float(model.predict_proba(scaled_data)[0][1])
         risk = round(probability * 100, 2)
 
+        # Recommendation System (Based on Risk)
+        if risk < 30:
+            recommendation = """
+    🟢 LOW RISK DIET PLAN
+
+    🍎 Eat more:
+    - Fruits (apple, banana, orange)
+    - Green vegetables (spinach, broccoli)
+    - Whole grains (oats, brown rice)
+    - Nuts (almonds, walnuts)
+    - Plenty of water
+
+    ❌ Avoid:
+    - Junk food (pizza, burger)
+    - Sugary drinks
+    - Excess salt and oil
+
+    🏃 Lifestyle:
+    - Daily walking (30 min)
+    - Regular sleep
+    """
+        elif risk < 70:
+            recommendation = """
+    🟠 MEDIUM RISK DIET PLAN
+
+    🍎 Eat more:
+    - High fiber foods (oats, legumes)
+    - Fresh vegetables
+    - Low-fat dairy products
+    - Fish (omega-3 rich)
+
+    ❌ Avoid:
+    - Fried foods
+    - Excess red meat
+    - Soft drinks
+    - Smoking & alcohol
+
+    🏃 Lifestyle:
+    - Exercise 4–5 days/week
+    - Reduce stress
+    - Monitor BP regularly
+    """
+        else:
+            recommendation = """
+    🔴 HIGH RISK DIET PLAN
+
+    🍎 Eat carefully:
+    - Strict low-salt diet
+    - Boiled vegetables
+    - Fruits (limited sugar)
+    - Whole grains in small portions
+
+    ❌ STRICTLY AVOID:
+    - Fried & oily food
+    - Fast food
+    - Alcohol & smoking
+    - High cholesterol foods
+
+    🏃 Lifestyle:
+    - Immediate doctor consultation
+    - Daily BP monitoring
+    - Light walking only (if doctor allows)
+    """
+
+        # Record prediction history to SQLite database
+        try:
+            conn = sqlite3.connect("history.db")
+            c = conn.cursor()
+            c.execute("INSERT INTO history (age, chol, bp, risk, date) VALUES (?, ?, ?, ?, ?)",
+                      (age, chol, trestbps, risk, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+            conn.commit()
+            conn.close()
+        except Exception as db_err:
+            print("Database insertion failed:", db_err)
+
         category = 'High' if prediction == 1 else 'Low'
         result_text = f"⚠️ High Risk ({risk:.2f}%)" if prediction == 1 else f"✅ Low Risk ({risk:.2f}%)"
         
@@ -176,7 +359,8 @@ def predict():
                 'prediction_text': result_text,
                 'probability': risk,
                 'category': category,
-                'tips': tips
+                'tips': tips,
+                'recommendation': recommendation
             })
 
         return render_template(
@@ -184,7 +368,8 @@ def predict():
             prediction_text=result_text,
             tips=tips,
             prediction=prediction,
-            risk=risk
+            risk=risk,
+            recommendation=recommendation
         )
     except Exception as e:
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.accept_mimetypes.accept_json:
