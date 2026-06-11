@@ -1,0 +1,22 @@
+# SQLite database files
+history.db
+*.db
+*.sqlite
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment files
+.env
+.venv
+venv/
+ENV/
+env/
+
+# IDE / System files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

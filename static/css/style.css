@@ -3532,3 +3532,52 @@ body {
     transform-origin: 200px 182px;
     animation: clyPing 1.8s infinite ease-in-out;
 }
+.risk-container {
+    width: 60%;
+    margin: auto;
+    text-align: center;
+    padding: 20px;
+}
+
+.progress {
+    width: 100%;
+    height: 25px;
+    background: #e0e0e0;
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    width: 0%;
+    background: green;
+    transition: width 1s ease-in-out;
+}
+
+.recommendation-box {
+    width: 80%;
+    margin: 24px auto 0 auto;
+    padding: 24px;
+    border-radius: 20px;
+    background: rgba(24, 24, 27, 0.4);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 15px;
+    line-height: 1.6;
+    color: #e4e4e7;
+}
+
+.recommendation-box h3 {
+    text-align: center;
+    color: #ffffff;
+    font-weight: 700;
+    margin-bottom: 16px;
+    font-size: 16px;
+    letter-spacing: 0.5px;
+}
+
+pre {
+    white-space: pre-wrap;
+    font-family: 'Plus Jakarta Sans', Arial, sans-serif;
+    color: #e4e4e7;
+}

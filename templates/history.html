@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cardimars // Diagnostic History</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts & FontAwesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #050505;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(0, 102, 255, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(230, 74, 74, 0.08) 0%, transparent 40%);
+            background-attachment: fixed;
+        }
+        .glass-card {
+            background: rgba(20, 20, 25, 0.6);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+    </style>
+</head>
+<body class="text-neutral-200 min-h-screen flex flex-col pb-12">
+
+    <!-- Global Header Navbar -->
+    <header class="w-full py-5 px-12 flex justify-between items-center border-b border-neutral-900 bg-neutral-950/40 backdrop-blur-md sticky top-0 z-50">
+        <div class="flex items-center gap-6">
+            <a href="/my-heart" class="text-neutral-400 text-sm font-medium hover:text-white flex items-center gap-1.5 transition">
+                <i class="fa-solid fa-arrow-left"></i>
+                Back to Assessment
+            </a>
+            <a href="/" class="text-neutral-400 text-sm font-medium hover:text-white flex items-center gap-1.5 transition">
+                <i class="fa-solid fa-house"></i>
+                Monitor
+            </a>
+        </div>
+        <span class="text-white font-bold text-2xl tracking-tight select-none absolute left-1/2 transform -translate-x-1/2">Cardimars&reg;</span>
+        <div class="flex items-center gap-4">
+            <span class="text-neutral-500 text-xs font-semibold uppercase tracking-wider hidden md:inline">Secure Node</span>
+            <a href="/logout" class="text-neutral-400 hover:text-[#E64A4A] text-sm font-semibold transition">Sign Out</a>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-5xl w-full mx-auto px-6 mt-10">
+        <div class="text-center mb-10">
+            <h1 class="text-white font-extrabold text-3xl md:text-4xl tracking-tight mb-2 flex items-center justify-center gap-3">
+                <span class="text-[#0066FF]"><i class="fa-solid fa-clock-rotate-left"></i></span> Diagnostic History Log
+            </h1>
+            <p class="text-neutral-400 text-sm md:text-base max-w-lg mx-auto">
+                Review previous cardiac assessment results recorded in the database.
+            </p>
+        </div>
+
+        <div class="glass-card rounded-2xl overflow-hidden p-6 md:p-8">
+            <div class="overflow-x-auto">
+                <table border="1" class="w-full border-collapse border border-neutral-800 text-sm text-left">
+                    <thead>
+                        <tr class="border-b border-neutral-800 text-neutral-400 font-bold uppercase tracking-wider text-xs bg-neutral-950/40">
+                            <th class="px-6 py-4">ID</th>
+                            <th class="px-6 py-4">Age</th>
+                            <th class="px-6 py-4">Cholesterol</th>
+                            <th class="px-6 py-4">BP</th>
+                            <th class="px-6 py-4">Risk</th>
+                            <th class="px-6 py-4">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-neutral-900">
+                        {% for row in data %}
+                        <tr class="hover:bg-neutral-900/40 transition">
+                            <td class="px-6 py-4 font-semibold text-neutral-400">#{{ row[0] }}</td>
+                            <td class="px-6 py-4 font-medium text-white">{{ row[1] }}</td>
+                            <td class="px-6 py-4 font-medium text-white">{{ row[2] }}</td>
+                            <td class="px-6 py-4 font-medium text-white">{{ row[3] }}</td>
+                            <td class="px-6 py-4">
+                                <span class="px-3 py-1 rounded-full text-xs font-bold {% if row[4] >= 70 %}bg-red-500/10 text-[#E64A4A] border border-red-500/20{% elif row[4] >= 30 %}bg-orange-500/10 text-orange-400 border border-orange-500/20{% else %}bg-green-500/10 text-[#2DE372] border border-green-500/20{% endif %}">
+                                    {{ row[4] }}%
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-neutral-400 font-mono text-xs">{{ row[5] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+</body>
+</html>
